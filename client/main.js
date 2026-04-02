@@ -16,6 +16,7 @@ const args = process.argv.slice(2).reduce((acc, arg) => {
     return acc;
 }, {});
 
+const mode = args['mode'] || 'target'; // Default to target
 const SERVER_URL = args['server'] || process.env.TERMINAL_SERVER_URL || 'ws://127.0.0.1:8899/live-term/';
 
 // Security Check: Enforce --allow-insecure for ws://
@@ -145,16 +146,24 @@ async function main() {
                 process.stdout.write(`\n\x1b[33m[!] Incoming connection. Verification Code: \x1b[1;36m${sas}\x1b[0m\n`);
                 
                 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-                const answer = await new Promise(resolve => rl.question('Approve this controller? [y/n]: ', resolve));
+                
+                let answer = '';
+                while (true) {
+                    answer = await new Promise(resolve => rl.question('Approve this controller? [y/N]: ', resolve));
+                    answer = answer.trim().toLowerCase();
+                    if (answer === 'y' || answer === 'n' || answer === '') break;
+                    process.stdout.write('Please enter "y" for yes or "n" for no.\n');
+                }
                 rl.close();
                 process.stdin.resume();
 
-                if (answer.toLowerCase() === 'y') {
+                if (answer === 'y') {
                     isApproved = true;
                     ws.send(JSON.stringify({ type: 'handshake_res', approved: true }));
                 } else {
-                    console.log('Rejected.');
+                    console.log('\x1b[31m[!] Rejected.\x1b[0m Closing connection...');
                     ws.close();
+                    process.exit(0);
                 }
             } else if (msg.type === 'auth' && isApproved) {
                 aesKey = crypto.privateDecrypt(privateKey, Buffer.from(msg.key, 'base64'));

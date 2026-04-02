@@ -20,53 +20,36 @@ This project was developed with significant assistance from **AI (Gemini CLI)**.
 ```bash
 # Install globally
 npm install -g @xun66/live-term
-
-# Run the client
-live-term --mode=target --id=YOUR_SESSION_ID
-```
-
-### 2. Start the Relay Server
-
-You can run your own relay server locally or using Docker.
-
-**Locally:**
-```bash
-# Default path: /live-term/
-live-term-server --port 8899
-```
-
-**Docker:**
-```bash
-docker build -t live-term-relay .
-docker run -p 8899:8899 -e API_BASE=/live-term/ live-term-relay
 ```
 
 ### 🌍 Free Relay Server
 
-A free public relay server is provided at **xebox.org**. If you want to use it instead of hosting your own, you can specify its address as your server:
+A free public relay server is provided at **xebox.org**. It is the easiest way to get started.
 
-**Connect to the free server:**
+**Set the server environment variable (Recommended):**
 ```bash
-# Target mode
-live-term --mode=target --id=YOUR_ID --server=wss://xebox.org/live-term/
-
-# Controller mode
-live-term --mode=controller --id=YOUR_ID --server=wss://xebox.org/live-term/
+export TERMINAL_SERVER_URL=wss://xebox.org/live-term/
 ```
-*(Note: If you don't specify a server, it defaults to `ws://127.0.0.1:8899/live-term/`)*
 
+**Connect as Target (Host machine):**
+```bash
+# Mode defaults to target if omitted
+live-term --id=YOUR_SESSION_ID
+```
+
+**Connect as Controller (Remote machine):**
+```bash
+live-term --mode=controller --id=YOUR_SESSION_ID
+```
+
+*(Note: If you prefer not to use environment variables, you can use the `--server` flag in every command: `live-term --server=wss://xebox.org/live-term/ --id=XYZ`)*
+
+### 2. Start your own Relay Server (Optional)
 ### 3. Connect as Target
 
-On the machine you want to control:
+If you are using your own server instead of the free one:
 ```bash
-node client/main.js --mode=target --id=YOUR_SESSION_ID
-```
-
-### 4. Connect as Controller
-
-On the machine you are controlling from:
-```bash
-node client/main.js --mode=controller --id=YOUR_SESSION_ID
+live-term --id=YOUR_ID --server=ws://localhost:8899/live-term/ --allow-insecure
 ```
 
 ## Security
