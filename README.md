@@ -27,18 +27,33 @@ live-term --mode=target --id=YOUR_SESSION_ID
 
 ### 2. Start the Relay Server
 
-You can run the relay server locally or using Docker.
+You can run your own relay server locally or using Docker.
 
 **Locally:**
 ```bash
-node server/index.js --port 8899
+# Default path: /live-term/
+live-term-server --port 8899
 ```
 
 **Docker:**
 ```bash
 docker build -t live-term-relay .
-docker run -p 8899:8899 live-term-relay
+docker run -p 8899:8899 -e API_BASE=/live-term/ live-term-relay
 ```
+
+### 🌍 Free Relay Server
+
+A free public relay server is provided at **xebox.org**. If you want to use it instead of hosting your own, you can specify its address as your server:
+
+**Connect to the free server:**
+```bash
+# Target mode
+live-term --mode=target --id=YOUR_ID --server=wss://xebox.org/live-term/
+
+# Controller mode
+live-term --mode=controller --id=YOUR_ID --server=wss://xebox.org/live-term/
+```
+*(Note: If you don't specify a server, it defaults to `ws://127.0.0.1:8899/live-term/`)*
 
 ### 3. Connect as Target
 

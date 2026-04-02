@@ -10,13 +10,13 @@ const readline = require('readline');
  */
 
 // --- Configuration ---
-const SERVER_URL = process.env.TERMINAL_SERVER_URL || 'ws://127.0.0.1:8899/chat';
-
 const args = process.argv.slice(2).reduce((acc, arg) => {
     const [k, v] = arg.split('=');
     acc[k.replace('--', '')] = v === undefined ? true : v;
     return acc;
 }, {});
+
+const SERVER_URL = args['server'] || process.env.TERMINAL_SERVER_URL || 'ws://127.0.0.1:8899/live-term/';
 
 // Security Check: Enforce --allow-insecure for ws://
 if (SERVER_URL.startsWith('ws://') && !args['allow-insecure']) {
