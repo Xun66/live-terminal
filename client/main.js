@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const { spawn } = require('node-pty');
 const crypto = require('crypto');
 const WebSocket = require('ws');

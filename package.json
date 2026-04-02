@@ -1,8 +1,18 @@
 {
-  "name": "termchat",
+  "name": "@xun66/live-term",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Terminal bidirectional E2EE remote sync tool",
+  "main": "server/index.js",
+  "bin": {
+    "live-term": "client/main.js",
+    "live-term-server": "server/index.js"
+  },
+  "files": [
+    "client/",
+    "server/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const { WebSocketServer } = require('ws');
 const url = require('url');
 
