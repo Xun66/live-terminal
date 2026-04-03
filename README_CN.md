@@ -4,7 +4,7 @@
 
 **live-term** 是一个安全、端到端加密（E2EE）的终端协作工具。它允许你通过中继（Relay）与远程协作者共享你的终端会话。
 
-![演示视频](./demo.mp4)
+https://github.com/user-attachments/assets/02a94823-0e09-470a-a55e-4ba3ff4b7fa4
 
 ## 快速开始
 
