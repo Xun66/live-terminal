@@ -12,13 +12,13 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy node_modules and server code from builder
+# Copy node_modules and relay code from builder
 COPY --from=builder /app/node_modules ./node_modules
-COPY server/ ./server/
+COPY relay/ ./relay/
 
 # Expose relay port
 EXPOSE 8080
 ENV PORT=8080
 
-# Start relay server
-CMD ["node", "server/index.js"]
+# Start relay
+CMD ["node", "relay/index.js"]

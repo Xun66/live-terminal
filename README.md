@@ -1,6 +1,6 @@
 # live-term
 
-**live-term** is a secure, End-to-End Encrypted (E2EE) terminal synchronization tool. It allows you to share your terminal session with a remote controller through a relay server.
+**live-term** is a secure, End-to-End Encrypted (E2EE) terminal collaboration tool. It allows you to share your terminal session with a remote collaborator through a relay.
 
 ## Quick Start
 
@@ -12,33 +12,33 @@ npm install -g @xun66/live-term
 
 ---
 
-### 🌍 Case 1: Using the Free Relay Server (Easiest)
+### 🌍 Case 1: Using the Free Relay (Easiest)
 
-We provide a free public relay server at `xebox.org`.
+We provide a free public relay at `xebox.org`.
 
 **Target (The machine you want to control):**
 ```bash
-TERMINAL_SERVER_URL=wss://xebox.org/live-term/ live-term
+TERMINAL_RELAY_URL=wss://xebox.org/live-term/ live-term
 ```
 *It will print a `Session ID` (UUID). Share this with the controller.*
 
 **Controller (The machine you are controlling from):**
 ```bash
-TERMINAL_SERVER_URL=wss://xebox.org/live-term/ live-term --mode=controller --target-id=YOUR_ID
+TERMINAL_RELAY_URL=wss://xebox.org/live-term/ live-term --mode=controller --target-id=YOUR_ID
 ```
 
 ---
 
-### 🏠 Case 2: Using your own Local/Private Server
+### 🏠 Case 2: Using your own Local/Private Relay
 
 **Target:**
 ```bash
-TERMINAL_SERVER_URL=ws://localhost:8899/live-term/ live-term --allow-insecure
+TERMINAL_RELAY_URL=ws://localhost:8899/live-term/ live-term --allow-insecure
 ```
 
 **Controller:**
 ```bash
-TERMINAL_SERVER_URL=ws://localhost:8899/live-term/ live-term --mode=controller --target-id=YOUR_ID --allow-insecure
+TERMINAL_RELAY_URL=ws://localhost:8899/live-term/ live-term --mode=controller --target-id=YOUR_ID --allow-insecure
 ```
 
 ---
@@ -50,15 +50,15 @@ TERMINAL_SERVER_URL=ws://localhost:8899/live-term/ live-term --mode=controller -
 | `--mode` | Run mode: `target` or `controller`. | `target` |
 | `--target-id`| (Controller only) The Session ID of the target. | **Required** |
 | `--id` | (Target only) Custom Session ID (Vanity ID). | (Random 6 chars) |
-| `--server` | Full URL of the relay server. | `ws://127.0.0.1:8899/live-term/` |
+| `--relay` | Full URL of the relay. | `ws://127.0.0.1:8899/live-term/` |
 | `--allow-insecure` | Allow `ws://` or self-signed certificates. | `false` |
 | `--hotkey` | Key to exit session (e.g., `ctrl+b`, `^x`). | `ctrl+x` |
 
-> **Note:** You can use the `TERMINAL_SERVER_URL` environment variable (as shown in the examples) or the `--server` flag to specify the relay.
+> **Note:** You can use the `TERMINAL_RELAY_URL` environment variable (as shown in the examples) or the `--relay` flag to specify the relay.
 
 ## Security
 
-- **E2EE**: All data is encrypted with AES-256-GCM. Keys are exchanged via RSA and never touch the server.
+- **E2EE**: All data is encrypted with AES-256-GCM. Keys are exchanged via RSA and never touch the relay.
 - **Verification Code (SAS)**: A **6-digit numeric code** is shown on both ends. **Verify this matches** to ensure no Man-in-the-Middle is present.
 - **Explicit Approval**: The target must manually approve any incoming connection.
 
@@ -66,7 +66,7 @@ TERMINAL_SERVER_URL=ws://localhost:8899/live-term/ live-term --mode=controller -
 
 ```bash
 # Node
-live-term-server --port 8899 --path=/live-term/
+live-term-relay --port 8899 --path=/live-term/
 
 # Docker
 docker run -p 8899:8899 -e API_BASE=/live-term/ ghcr.io/xun66/live-term-relay:latest

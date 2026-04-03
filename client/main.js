@@ -13,7 +13,7 @@ const args = process.argv.slice(2).reduce((acc, arg) => {
 }, {});
 
 const mode = args['mode'] || 'target'; 
-const SERVER_URL = args['server'] || process.env.TERMINAL_SERVER_URL || 'ws://127.0.0.1:8899/live-term/';
+const RELAY_URL = args['relay'] || process.env.TERMINAL_RELAY_URL || 'ws://127.0.0.1:8899/live-term/';
 
 // Hotkey Parser: Supports "ctrl+x", "^x", or raw hex like "\x18"
 function parseHotkey(val) {
@@ -34,7 +34,7 @@ const HOTKEY = parseHotkey(args['hotkey']);
 const HOTKEY_DISPLAY = args['hotkey'] || 'Ctrl+X';
 
 // Security Check: Enforce --allow-insecure for ws://
-if (SERVER_URL.startsWith('ws://') && !args['allow-insecure']) {
+if (RELAY_URL.startsWith('ws://') && !args['allow-insecure']) {
     console.error('\x1b[31m[Security Error]\x1b[0m Standard "ws://" is insecure. Use "wss://" or pass --allow-insecure to proceed.');
     process.exit(1);
 }
@@ -98,10 +98,10 @@ async function main() {
         const nonceT = crypto.randomBytes(16).toString('hex');
 
         console.log(`\x1b[32m[Target Mode]\x1b[0m Session ID: \x1b[1;36m${uuid}\x1b[0m`);
-        console.log(`\x1b[90mRelay Server: ${SERVER_URL}\x1b[0m`);
+        console.log(`\x1b[90mRelay: ${RELAY_URL}\x1b[0m`);
         console.log(`Waiting for controller to connect...`);
 
-        const ws = new WebSocket(`${SERVER_URL}?id=${uuid}&role=target`, wsOptions);
+        const ws = new WebSocket(`${RELAY_URL}?id=${uuid}&role=target`, wsOptions);
         let aesKey = null;
         let ptyProcess = null;
         let isApproved = false;
@@ -125,6 +125,7 @@ async function main() {
                 const sas = generateSAS(transcript);
 
                 process.stdout.write(`\n\x1b[33m[!] Incoming connection. Verification Code: \x1b[1;36m${sas}\x1b[0m\n`);
+                
                 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
                 let answer = '';
                 while (true) {
@@ -161,18 +162,25 @@ async function main() {
         });
 
         function startPty() {
-            let shell = args['shell'] || process.env.SHELL || (process.platform === 'win32' ? 'powershell.exe' : '/bin/zsh');
-            const cols = process.stdout.columns || 80;
-            const rows = process.stdout.rows || 24;
+            process.stdin.removeAllListeners('data');
+            const shell = args['shell'] || (process.platform === 'win32' ? 'powershell.exe' : (process.env.SHELL || '/bin/zsh'));
+            const cols = parseInt(process.stdout.columns) || 80;
+            const rows = parseInt(process.stdout.rows) || 24;
             
-            function trySpawn(exe) {
-                try { return spawn(exe, [], { name: 'xterm-256color', cols, rows, cwd: process.env.HOME || process.cwd(), env: process.env }); }
-                catch (e) { return null; }
-            }
-            ptyProcess = trySpawn(shell) || trySpawn('/bin/sh') || trySpawn('sh');
-
-            if (!ptyProcess) {
-                console.error(`\x1b[31m[Error]\x1b[0m Failed to spawn shell.`);
+            try {
+                ptyProcess = spawn(shell, [], {
+                    name: 'xterm-256color',
+                    cols,
+                    rows,
+                    cwd: process.env.HOME || process.cwd(),
+                    env: process.env
+                });
+            } catch (err) {
+                console.error(`\x1b[31m[Error]\x1b[0m Failed to spawn shell (${shell}):`, err.message);
+                if (err.message.includes('posix_spawnp') && process.platform === 'darwin') {
+                    console.error('\n\x1b[33m[Hint]\x1b[0m This error often occurs on macOS when node-pty spawn-helper lacks execute permissions.');
+                    console.error('Try running: \x1b[1mchmod +x node_modules/node-pty/prebuilds/darwin-arm64/spawn-helper\x1b[0m');
+                }
                 process.exit(1);
             }
 
@@ -213,7 +221,7 @@ async function main() {
         const sessionKey = crypto.randomBytes(32);
 
         console.log(`\x1b[34m[Controller Mode]\x1b[0m Connecting to target: \x1b[1;36m${targetId}\x1b[0m...`);
-        const ws = new WebSocket(`${SERVER_URL}?id=${targetId}&role=controller`, wsOptions);
+        const ws = new WebSocket(`${RELAY_URL}?id=${targetId}&role=controller`, wsOptions);
 
         const cleanup = (reason = 'Disconnected.') => {
             console.log(`\n\x1b[33m[!] ${reason}\x1b[0m`);
@@ -226,6 +234,11 @@ async function main() {
         ws.on('message', (data) => {
             let msg = JSON.parse(data);
             if (msg.type === 'secure') msg = decryptEnvelope(msg, sessionKey);
+
+            if (msg.type === 'error') {
+                cleanup(`Relay Error: ${msg.message}`);
+                process.exit(1);
+            }
 
             if (msg.type === 'session_sync' && msg.peer === 'target' && msg.status === 'ready') {
                 console.log(`\x1b[32m[OK] Target is online. Handshaking...\x1b[0m`);
